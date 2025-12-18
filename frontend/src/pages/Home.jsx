@@ -1,3 +1,4 @@
+import Navbar from '@/components/Navbar';
 import React from 'react';
 
 const Home = () => {
@@ -31,7 +32,7 @@ const Home = () => {
 
       <div className="min-h-screen bg-[linear-gradient(180deg,#0c1210_0%,#060908_100%)] text-[#f0f5f2]">
           <style>{keyframes}</style>
-        Home
+        <Navbar />
       </div>
     </>
   );

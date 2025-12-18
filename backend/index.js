@@ -1,29 +1,33 @@
-import express from "express"
-import dotenv from "dotenv"
+import express from "express";
+import dotenv from "dotenv";
 import database from "./utils/database.js";
 import userRouter from "./route/UserRoute.js";
-
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import geoRouter from "./route/routeRouter.js";
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
+const app = express();
 
-
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.use(cookieParser())
+database();
 
-const port = process.env.PORT || 4000
+app.use("/api/v1", userRouter);
 
-database()
+app.use("/api/v2",geoRouter)
 
-app.use("/api/v1",userRouter)
+const port = process.env.PORT || 3000;
 
-app.listen(port,()=>{
-    console.log(`Server is Running at port No ${port}`)
-})
-
-
-
+app.listen(port, () => {
+  console.log(`✅ Server running on port ${port}`);
+});
