@@ -1,149 +1,235 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
-import RouteMap from "../components/RouteMap";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import AQIBadge from "../components/AQIBadge";
+
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+import {
+  Leaf,
+  Trophy,
+  Zap,
+  Car,
+  ShoppingBag,
+  Target,
+  Calendar,
   MapPin,
-  Navigation,
-  Search,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
+  Edit,
+  Settings,
 } from "lucide-react";
 
-const Routes = () => {
-  const [origin, setOrigin] = useState("Delhi");
-  const [destination, setDestination] = useState("");
-  const [routes, setRoutes] = useState([]);
-  const [selectedRoute, setSelectedRoute] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+const Profile = () => {
+  const [assessment, setAssessment] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSearch = async () => {
-    if (!destination) return;
+  /* ---------------- FETCH BACKEND DATA ---------------- */
+  useEffect(() => {
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/v4/eco/latest", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setAssessment(data.assessment);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLatest();
+  }, []);
 
-    setIsSearching(true);
+  /* ---------------- LOADING STATE ---------------- */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0f0d] text-white">
+        Loading profile...
+      </div>
+    );
+  }
 
-    try {
-      const res = await axios.post("http://localhost:3000/api/v2/routes", {
-        originCity: origin,
-        destinationCity: destination,
-      });
+  /* ---------------- UNAUTHORIZED / NO DATA ---------------- */
+  if (!assessment) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0f0d] text-red-400">
+        Unauthorized or no assessment found
+      </div>
+    );
+  }
 
-      setRoutes(res.data.routes || []);
-      setSelectedRoute(res.data.routes?.[0]?.id);
-    } catch (err) {
-      console.error("Failed to fetch routes", err);
-    } finally {
-      setIsSearching(false);
-    }
+  /* ---------------- DYNAMIC PROFILE DATA ---------------- */
+  const userProfile = {
+    name: assessment.userId?.name || "User",
+    email: assessment.userId?.email,
+    avatar: assessment.userId?.profile?.profilePhoto,
+    pollutionScore: assessment.score || 0,
+    maxScore: 900,
+    location: "India",
+    joinedDate: "2024",
+    rank: 4,
+    streakDays: 12,
   };
 
+  const scoreBreakdown = [
+    { category: "Electricity", score: 180, maxScore: 225, icon: Zap, color: "#F59E0B" },
+    { category: "Transport", score: 210, maxScore: 225, icon: Car, color: "#3B82F6" },
+    { category: "Shopping", score: 160, maxScore: 225, icon: ShoppingBag, color: "#14B8A6" },
+    { category: "Lifestyle", score: 170, maxScore: 225, icon: Leaf, color: "#22C55E" },
+  ];
+
+  /* ---------------- UI ---------------- */
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: "100vh", backgroundColor: "#0a0f0d" }}>
       <Navbar />
 
-      <main className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-6">
+      <main style={{ padding: "6rem 1rem", maxWidth: "1200px", margin: "0 auto" }}>
+        {/* PROFILE HEADER */}
+        <Card
+          style={{
+            background: "rgba(20,30,25,0.7)",
+            border: "1px solid rgba(34,197,94,0.2)",
+            borderRadius: "16px",
+            marginBottom: "24px",
+          }}
+        >
+          <CardContent style={{ textAlign: "center", padding: "32px" }}>
+            <Avatar
+              style={{
+                width: "120px",
+                height: "120px",
+                margin: "0 auto",
+                border: "4px solid #0a0f0d",
+              }}
+            >
+              <AvatarImage src={userProfile.avatar} />
+              <AvatarFallback style={{ fontSize: "2rem", color: "#22C55E" }}>
+                {userProfile.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
 
-            {/* LEFT SIDE */}
-            <div className="space-y-6">
-              <Card variant="glass">
-                <CardContent className="p-6 space-y-4">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
-                    <Input
-                      value={origin}
-                      onChange={(e) => setOrigin(e.target.value)}
-                      placeholder="From city"
-                      className="pl-10"
-                    />
-                  </div>
+            <h1 style={{ color: "#E5E7EB", fontSize: "1.5rem", marginTop: "12px" }}>
+              {userProfile.name}
+            </h1>
 
-                  <div className="relative">
-                    <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
-                    <Input
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="To city"
-                      className="pl-10"
-                    />
-                  </div>
-
-                  <Button
-                    variant="eco"
-                    className="w-full"
-                    onClick={handleSearch}
-                    disabled={isSearching || !destination}
-                  >
-                    {isSearching ? "Finding clean routes..." : (
-                      <>
-                        <Search className="w-4 h-4" />
-                        Find Clean Routes
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* MAP */}
-              <Card variant="glass" className="h-[360px] overflow-hidden">
-                {routes.length ? (
-                  <RouteMap routes={routes} />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    Enter destination to view routes
-                  </div>
-                )}
-              </Card>
+            <div style={{ color: "#9CA3AF", marginTop: "4px" }}>
+              <MapPin size={14} /> {userProfile.location} •{" "}
+              <Calendar size={14} /> Joined {userProfile.joinedDate}
             </div>
 
-            {/* RIGHT SIDE */}
-            <div className="space-y-4">
-              {routes.map((route) => (
-                <Card
-                  key={route.id}
-                  variant={selectedRoute === route.id ? "glow" : "glass"}
-                  className="cursor-pointer transition-all"
-                  onClick={() => setSelectedRoute(route.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold">{route.name}</h3>
-                      <AQIBadge value={route.aqi} />
-                    </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "12px",
+                marginTop: "12px",
+              }}
+            >
+              <Badge style={{ background: "rgba(34,197,94,0.2)", color: "#22C55E" }}>
+                <Trophy size={12} /> Rank #{userProfile.rank}
+              </Badge>
 
-                    <div className="text-sm text-muted-foreground">
-                      AQI Level based eco route
-                    </div>
-
-                    {route.aqi > 100 && (
-                      <div className="flex items-center gap-2 mt-3 p-2 rounded bg-eco-amber/10 text-eco-amber text-xs">
-                        <AlertTriangle className="w-4 h-4" />
-                        Mask recommended
-                      </div>
-                    )}
-
-                    {selectedRoute === route.id && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-primary">
-                        <CheckCircle className="w-3 h-3" />
-                        Selected Route
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+              <Badge style={{ background: "rgba(245,158,11,0.2)", color: "#F59E0B" }}>
+                <Zap size={12} /> {userProfile.streakDays} Day Streak
+              </Badge>
             </div>
 
-          </div>
-        </div>
+            <div
+              style={{
+                marginTop: "16px",
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+              }}
+            >
+              <Button size="sm" variant="outline">
+                <Edit size={14} /> Edit
+              </Button>
+              <Button size="sm" variant="ghost">
+                <Settings size={14} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* POLLUTION SCORE */}
+        <Card
+          style={{
+            background: "rgba(20,30,25,0.7)",
+            border: "1px solid rgba(34,197,94,0.2)",
+            borderRadius: "16px",
+            marginBottom: "24px",
+          }}
+        >
+          <CardHeader>
+            <CardTitle style={{ color: "#E5E7EB" }}>
+              <Leaf color="#22C55E" /> Pollution Score
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent style={{ textAlign: "center" }}>
+            <h2
+              style={{
+                fontSize: "3rem",
+                background: "linear-gradient(135deg,#22C55E,#14B8A6,#3B82F6)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              {userProfile.pollutionScore}
+            </h2>
+            <p style={{ color: "#9CA3AF" }}>/ {userProfile.maxScore}</p>
+          </CardContent>
+        </Card>
+
+        {/* SCORE BREAKDOWN */}
+        <Card
+          style={{
+            background: "rgba(20,30,25,0.7)",
+            border: "1px solid rgba(34,197,94,0.2)",
+            borderRadius: "16px",
+          }}
+        >
+          <CardHeader>
+            <CardTitle style={{ color: "#E5E7EB" }}>
+              <Target color="#14B8A6" /> Score Breakdown
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {scoreBreakdown.map((item) => (
+              <div key={item.category}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#E5E7EB" }}>
+                  <span>
+                    <item.icon size={14} color={item.color} /> {item.category}
+                  </span>
+                  <span>{item.score}/{item.maxScore}</span>
+                </div>
+
+                <div style={{ height: "8px", background: "#1F2937", borderRadius: "4px" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${(item.score / item.maxScore) * 100}%`,
+                      background: item.color,
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
 };
 
-export default Routes;
+export default Profile;

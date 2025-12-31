@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Leaf, Lock, Mail, Upload, User, ArrowRight } from "lucide-react";
 import axios from "axios";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AuthContext } from "@/components/context/context";
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,8 @@ const Register = () => {
   const [confirm, setConfirm] = useState("");
   const [preview, setPreview] = useState("");
   const [success, setSuccess] = useState(false);
+  const { setUser } = useContext(AuthContext);
+
 
   /* ---------------- handlers ---------------- */
 
@@ -56,6 +59,8 @@ const Register = () => {
       return toast.error("Passwords do not match");
     }
 
+    
+
     try {
       setIsLoading(true);
 
@@ -73,7 +78,7 @@ const Register = () => {
 
       toast.success(res.data.message);
       setSuccess(true);
-
+       setUser(res.data.user);
       // wait before navigating
       setTimeout(() => {
         navigate("/");

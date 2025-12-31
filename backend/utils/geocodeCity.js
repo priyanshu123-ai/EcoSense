@@ -10,15 +10,18 @@ export const geocodeCity = async (city) => {
         limit: 1,
       },
       headers: {
-        "User-Agent": "EcoSense-App",
-      },
+        "User-Agent": "city-pollution-app"
+      }
     }
   );
 
   if (!res.data.length) return null;
 
+  const place = res.data[0];
+
   return {
-    lat: parseFloat(res.data[0].lat),
-    lon: parseFloat(res.data[0].lon),
+    lat: parseFloat(place.lat),
+    lon: parseFloat(place.lon),
+    bbox: place.boundingbox.map(Number), // [south, north, west, east]
   };
 };
