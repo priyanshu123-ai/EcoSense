@@ -8,26 +8,59 @@ export const cityPollutionController = async (req, res) => {
     const { city } = req.body;
 
     if (!city) {
-      return res.status(400).json({ success: false, message: "City required" });
+      return res.status(400).json({
+        success: false,
+        message: "City required",
+      });
     }
 
-    // 1️⃣ City → lat/lon (YOU ALREADY HAVE THIS)
+    // 1️⃣ City → lat/lon
     const location = await geocodeCity(city);
 
     if (!location) {
-      return res.status(400).json({ success: false, message: "Invalid city" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid city",
+      });
     }
 
-    // 2️⃣ Real AQI
-    const { aqi } = await getAQIByCoords(location.lat, location.lon);
+    // 2️⃣ Real AQI (safe)
+    let aqi = null;
+    try {
+      const aqiRes = await getAQIByCoords(location.lat, location.lon);
+      aqi = aqiRes?.aqi ?? null;
+    } catch (e) {
+      console.warn("AQI fetch failed, continuing...");
+    }
 
-    // 3️⃣ Detect pollution sources dynamically
-   const sources = await detectPollutionSources(location.bbox);
+    // 3️⃣ ALWAYS CREATE A VALID BBOX
+    const bbox = Array.isArray(location.bbox)
+      ? location.bbox
+      : [
+          location.lat - 0.1, // south
+          location.lat + 0.1, // north
+          location.lon - 0.1, // west
+          location.lon + 0.1, // east
+        ];
 
-    // 4️⃣ Calculate contribution
+    // 4️⃣ Detect pollution sources (safe)
+    let sources = {
+      transport: 0,
+      industry: 0,
+      power: 0,
+      construction: 0,
+    };
+
+    try {
+      sources = await detectPollutionSources(bbox);
+    } catch (e) {
+      console.warn("Overpass failed, continuing...");
+    }
+
+    // 5️⃣ Calculate sector contribution
     const contribution = calculateSectorContribution(sources);
 
-    // 5️⃣ Response
+    // 6️⃣ Response
     res.json({
       success: true,
       city,
@@ -37,7 +70,7 @@ export const cityPollutionController = async (req, res) => {
       detectedSources: sources,
     });
   } catch (err) {
-    console.error(err.message);
+    console.error("City pollution error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to calculate pollution contribution",
