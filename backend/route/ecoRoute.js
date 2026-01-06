@@ -18,6 +18,8 @@ eco.get("/eco/latest", isAuthenticated, getLatestAssessment);
 // UPDATE assessment
 eco.put("/eco/update/:assessmentId", isAuthenticated, updateEcoAssessment);
 
-eco.get("/leader",getLeaderboard)
+eco.get("/leader",isAuthenticated,getLeaderboard)
+
+
 
 export default eco;

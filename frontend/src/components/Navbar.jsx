@@ -11,6 +11,9 @@ import {
   LogOut,
   Settings,
   Factory,
+  ChartBar,
+  Inspect,
+  DatabaseIcon,
 } from "lucide-react";
 
 import { Button } from "./ui/button";
@@ -26,6 +29,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { serverUrl } from "@/main";
 
 const Navbar = () => {
   const location = useLocation();
@@ -36,7 +40,7 @@ const Navbar = () => {
   const { user, setUser } = useContext(AuthContext);
 
   const handleLogout = async () => {
-    const res = await axios.get("http://localhost:3000/api/v1/logout",{
+    const res = await axios.get(`${serverUrl}/api/v1/logout`,{
       withCredentials:true
     })
      setUser(null);
@@ -56,7 +60,7 @@ const Navbar = () => {
   `;
 
   const mainNavLinks = [
-    { path: "/scanner", label: "Scanner", icon: LayoutDashboard },
+    { path: "/bill-scanner", label: "Scanner", icon: LayoutDashboard },
     { path: "/dashboard", label: "Dashboard", icon: Database },
     { path: "/recommendations", label: "Eco Products", icon: Gamepad2 },
     { path: "/chat", label: "EcoBot", icon: Trophy },
@@ -179,7 +183,7 @@ const Navbar = () => {
       </Link>
 
       <Link
-        to="/settings"
+        to="/leaderboard"
         className="
           flex items-center gap-3
           px-5 py-2.5
@@ -188,9 +192,55 @@ const Navbar = () => {
           transition
         "
       >
-        <Settings size={18} />
-        Settings
+        <Trophy size={18} />
+        Leaderboard
       </Link>
+
+        <Link
+        to="/send"
+        className="
+          flex items-center gap-3
+          px-5 py-2.5
+          text-sm text-gray-200
+          hover:bg-green-500/10
+          transition
+        "
+      >
+        <ChartBar size={18} />
+        Challenge
+      </Link>
+
+       <Link
+        to="/insights"
+        className="
+          flex items-center gap-3
+          px-5 py-2.5
+          text-sm text-gray-200
+          hover:bg-green-500/10
+          transition
+        "
+      >
+        <Inspect size={18} />
+        Insights
+      </Link>
+
+        <Link
+        to="/pitch"
+        className="
+          flex items-center gap-3
+          px-5 py-2.5
+          text-sm text-gray-200
+          hover:bg-green-500/10
+          transition
+        "
+      >
+        <Inspect size={18} />
+        Presentation
+      </Link>
+
+    
+
+
     </div>
 
     <div className="h-px bg-green-500/10" />

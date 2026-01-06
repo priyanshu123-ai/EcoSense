@@ -46,6 +46,7 @@ export const register = async (req, res) => {
       profile: {
         profilePhoto,
       },
+
     });
 
     return res.status(201).json({
@@ -103,6 +104,7 @@ export const login = async (req, res) => {
       name: user.name,
       email: user.email,
       profile: user.profile,
+      token:token
     };
 
     return res

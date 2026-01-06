@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ScoreBreakdown from "./ScoreBreakdown";
+import { serverUrl } from "@/main";
 
 const getScoreMeta = (score) => {
   if (score >= 701)
@@ -41,7 +42,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/v4/eco/latest", {
+        const res = await fetch(`${serverUrl}/api/v4/eco/latest`, {
           credentials: "include",
         });
         const data = await res.json();

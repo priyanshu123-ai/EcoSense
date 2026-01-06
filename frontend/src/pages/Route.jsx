@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
-import Navbar from "../components/Navbar";
-import RouteMap from "../components/RouteMap";
+import Navbar from "@/components/Navbar";
+import RouteMap from "@/components/RouteMap";
 import AQIBadge from "../components/AQIBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,11 @@ import {
   Clock,
   Route,
   AlertTriangle,
-  CheckCircle,
+  Loader2,
 } from "lucide-react";
+import { serverUrl } from "@/main";
 
-/* AQI → COLOR (HEX only) */
+/* AQI color helper */
 const getAQIColor = (aqi) => {
   if (aqi === null) return "#9CA3AF";
   if (aqi <= 50) return "#22C55E";
@@ -26,7 +27,7 @@ const getAQIColor = (aqi) => {
   return "#991B1B";
 };
 
-/* VISUAL SEGMENTS (NO FAKE AQI) */
+/* Fake AQI segments (UI only) */
 const buildAQISegments = (geometry, aqi) => {
   if (!geometry || geometry.length < 2) return [];
   const count = Math.min(6, Math.floor(geometry.length / 3));
@@ -37,7 +38,9 @@ const Routes = () => {
   const [origin, setOrigin] = useState("Delhi");
   const [destination, setDestination] = useState("");
   const [routes, setRoutes] = useState([]);
-  const [selectedRoute, setSelectedRoute] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState(0);
+  const [originCoords, setOriginCoords] = useState(null);
+  const [destinationCoords, setDestinationCoords] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
@@ -45,7 +48,7 @@ const Routes = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3000/api/v2/routes", {
+      const res = await axios.post(`${serverUrl}/api/v2/routes`, {
         originCity: origin,
         destinationCity: destination,
       });
@@ -56,7 +59,9 @@ const Routes = () => {
       }));
 
       setRoutes(enrichedRoutes);
-      setSelectedRoute(enrichedRoutes?.[0]?.id || null);
+      setSelectedRoute(0);
+      setOriginCoords(res.data.origin);
+      setDestinationCoords(res.data.destination);
     } catch (err) {
       console.error("Route fetch error:", err);
     } finally {
@@ -65,112 +70,121 @@ const Routes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#0c1210_0%,#060908_100%)] text-white">
+    <div className="min-h-screen" style={{ background: "#0a0f0d" }}>
       <Navbar />
 
-      <main className="pt-24 pb-12 max-w-[1200px] mx-auto px-4">
-        {/* TITLE */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            <span className="bg-[linear-gradient(135deg,#1db954,#1fa8a1,#199fe6)] bg-clip-text text-transparent">
-              AQI-Aware
-            </span>{" "}
-            Route Planner
+      <div className="container mx-auto px-4 py-8 mt-16">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="text-emerald-400">AQI-Aware</span>{" "}
+            <span className="text-white">Route Planner</span>
           </h1>
-          <p className="text-[rgba(255,255,255,0.6)]">
+          <p className="text-gray-400 text-lg">
             Find the cleanest route to your destination
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* LEFT */}
-          <div className="space-y-6">
-            {/* SEARCH */}
-            <Card className="rounded-2xl bg-[rgba(15,25,23,0.75)] border border-[rgba(37,58,52,0.5)] backdrop-blur-xl">
-              <CardContent className="p-6 space-y-4">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(29,185,84)]" />
-                  <Input
-                    value={origin}
-                    onChange={(e) => setOrigin(e.target.value)}
-                    placeholder="From city"
-                    className="pl-10 bg-[rgba(26,35,31,0.5)] border-[rgba(37,58,52,0.5)] text-white"
-                  />
-                </div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Section */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Search Card */}
+            <Card className="border-0" style={{ background: "rgba(15,25,23,0.9)" }}>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400" />
+                    <Input
+                      value={origin}
+                      onChange={(e) => setOrigin(e.target.value)}
+                      placeholder="From city"
+                      className="pl-10 bg-transparent border-emerald-500/30 text-white"
+                    />
+                  </div>
 
-                <div className="relative">
-                  <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(31,168,161)]" />
-                  <Input
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="To city"
-                    className="pl-10 bg-[rgba(26,35,31,0.5)] border-[rgba(37,58,52,0.5)] text-white"
-                  />
-                </div>
+                  <div className="relative flex-1">
+                    <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400" />
+                    <Input
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="To city"
+                      className="pl-10 bg-transparent border-emerald-500/30 text-white"
+                    />
+                  </div>
 
-                <Button
-                  onClick={handleSearch}
-                  disabled={loading || !destination}
-                  className="w-full font-semibold text-[#080d0b]
-                  bg-[linear-gradient(135deg,#1db954,#1fa8a1)]"
-                >
-                  {loading ? "Finding clean routes..." : (
-                    <>
-                      <Search className="w-4 h-4" />
-                      Find Clean Routes
-                    </>
-                  )}
-                </Button>
+                  <Button
+                    onClick={handleSearch}
+                    disabled={loading}
+                    className="bg-emerald-500 hover:bg-emerald-600 px-8"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Finding...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4 mr-2" />
+                        Find Routes
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
-            {/* MAP */}
-            <Card className="h-[360px] rounded-2xl bg-[rgba(15,25,23,0.75)] border border-[rgba(37,58,52,0.5)] overflow-hidden">
-              {routes.length ? (
-                <RouteMap routes={routes} />
-              ) : (
-                <div className="h-full flex items-center justify-center text-[rgba(255,255,255,0.4)]">
-                  Enter destination to see routes
-                </div>
-              )}
+            {/* Map */}
+            <Card className="border-0 overflow-hidden" style={{ background: "rgba(15,25,23,0.9)" }}>
+              <CardContent className="p-4">
+                {routes.length > 0 && originCoords && destinationCoords ? (
+                  <RouteMap
+                    routes={routes}
+                    selectedRouteId={selectedRoute}
+                    origin={originCoords}
+                    destination={destinationCoords}
+                  />
+                ) : (
+                  <div className="h-[450px] flex items-center justify-center border-2 border-dashed border-emerald-500/20">
+                    <Route className="w-16 h-16 text-emerald-500/30" />
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </div>
 
-          {/* RIGHT */}
+          {/* Right Section */}
           <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-white">Available Routes</h2>
+
             {routes.map((route) => (
               <Card
                 key={route.id}
                 onClick={() => setSelectedRoute(route.id)}
-                className={`rounded-2xl cursor-pointer transition-all
-                bg-[rgba(15,25,23,0.75)] backdrop-blur-xl border
-                ${
+                className={`cursor-pointer border-2 ${
                   selectedRoute === route.id
-                    ? "border-[rgb(29,185,84)] shadow-[0_0_35px_rgba(29,185,84,0.35)]"
-                    : "border-[rgba(37,58,52,0.5)]"
+                    ? "border-emerald-500"
+                    : "border-transparent"
                 }`}
+                style={{ background: "rgba(15,25,23,0.9)" }}
               >
-                <CardContent className="p-4">
-                  {/* HEADER */}
-                  <div className="flex justify-between mb-2">
-                    <h3 className="font-semibold text-white truncate">
-                      {route.name}
-                    </h3>
-                    <AQIBadge value={route.aqi} />
+                <CardContent className="p-5">
+                  <div className="flex justify-between mb-3">
+                    <h3 className="text-white font-semibold">{route.name}</h3>
+                    <AQIBadge value={route.aqi} size="sm" />
                   </div>
 
-                  {/* META */}
-                  <div className="flex items-center gap-4 text-sm text-[rgba(255,255,255,0.6)] mb-3">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" /> {route.duration}
+                  <div className="flex gap-4 text-gray-400 text-sm mb-3">
+                    <span className="flex gap-1">
+                      <Clock className="w-4 h-4" />
+                      {route.duration}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Route className="w-4 h-4" /> {route.distance}
+                    <span className="flex gap-1">
+                      <Route className="w-4 h-4" />
+                      {route.distance}
                     </span>
                   </div>
 
-                  {/* AQI BAR */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 mb-3">
                     {route.segments.map((s, i) => (
                       <div
                         key={i}
@@ -180,10 +194,8 @@ const Routes = () => {
                     ))}
                   </div>
 
-                  {/* MASK */}
                   {route.aqi > 100 && (
-                    <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded
-                      bg-[rgba(245,158,11,0.18)] text-[#F59E0B] text-xs">
+                    <div className="flex gap-2 text-amber-400 text-sm">
                       <AlertTriangle className="w-4 h-4" />
                       Mask recommended
                     </div>
@@ -193,7 +205,26 @@ const Routes = () => {
             ))}
           </div>
         </div>
-      </main>
+
+        {/* Navigation Button */}
+        {routes.length > 0 && (
+  <div className="fixed bottom-8 right-6">
+    <Button
+      onClick={() =>
+        window.open(
+          `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`,
+          "_blank"
+        )
+      }
+      className="bg-emerald-500 px-8 py-6 rounded-full shadow-lg"
+    >
+      <Navigation className="w-5 h-5 mr-2" />
+      Start Navigation
+    </Button>
+  </div>
+)}
+
+      </div>
     </div>
   );
 };

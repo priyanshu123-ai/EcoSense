@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthContext } from "@/components/context/context";
+import { serverUrl } from "@/main";
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +72,7 @@ const Register = () => {
       if (form.profilePhoto) fd.append("profilePhoto", form.profilePhoto);
 
       const res = await axios.post(
-        "http://localhost:3000/api/v1/register",
+        `${serverUrl}/api/v1/register`,
         fd,
         { withCredentials: true }
       );

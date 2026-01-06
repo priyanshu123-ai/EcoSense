@@ -1,11 +1,11 @@
 export const estimateTimeMinutes = (distanceKm, roadType = "city") => {
-  // realistic average speeds
   const SPEEDS = {
-    motorway: 60,
-    primary: 45,
-    secondary: 35,
-    residential: 25,
-    city: 30,
+    motorway: 70,
+    trunk: 60,
+    primary: 50,
+    secondary: 40,
+    residential: 30,
+    city: 35,
   };
 
   const speed = SPEEDS[roadType] || SPEEDS.city;

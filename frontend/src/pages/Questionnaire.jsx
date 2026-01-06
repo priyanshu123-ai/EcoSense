@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,13 +17,13 @@ import {
   Zap,
   Car,
   ShoppingBag,
-  Leaf,
   ChevronRight,
   ChevronLeft,
   Recycle,
   Utensils,
   Home,
 } from "lucide-react";
+import { serverUrl } from "@/main";
 
 const questions = [
   {
@@ -111,8 +117,6 @@ const questions = [
 
 const Questionnaire = () => {
   const navigate = useNavigate();
-  
-
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isCalculating, setIsCalculating] = useState(false);
@@ -127,7 +131,7 @@ const Questionnaire = () => {
 
   const handleNext = () => {
     if (currentStep < total - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
       calculateScore();
     }
@@ -135,43 +139,29 @@ const Questionnaire = () => {
 
   const handlePrev = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
-  // 🔥 BACKEND CONNECTED
   const calculateScore = async () => {
     setIsCalculating(true);
-
     try {
-     const res = await fetch("http://localhost:3000/api/v4/eco", {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ answers }),
-});
-
-
-    
+      const res = await fetch(`${serverUrl}/api/v4/eco`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+      });
 
       const data = await res.json();
 
-      console.log(data);
-
-      toast({
-        title: "Eco Score Ready 🌱",
-        description: `Your score: ${data.assessment.score}`,
-      });
+      toast.success(`Eco Score Ready 🌱  Score: ${data.assessment.score}`);
 
       navigate("/dashboard", {
         state: data.assessment,
       });
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to calculate eco score",
-        variant: "destructive",
-      });
+      toast.error("Failed to calculate eco score");
     } finally {
       setIsCalculating(false);
     }
@@ -186,7 +176,7 @@ const Questionnaire = () => {
       <main className="pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-2xl">
 
-          {/* 🔥 Progress Header */}
+          {/* Progress */}
           <div className="mb-8">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-400">
@@ -197,20 +187,15 @@ const Questionnaire = () => {
               </span>
             </div>
 
-            {/* 🔥 Custom Gradient Progress Bar */}
             <div className="w-full h-2 rounded-full bg-[#111] overflow-hidden">
               <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${progress}%`,
-                  background:
-                    "linear-gradient(180deg, #0c1210 0%, #060908 100%)",
-                }}
+                className="h-full transition-all duration-500 bg-green-500"
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          {/* Question Card */}
+          {/* Card */}
           <Card className="bg-black/40 border border-white/10">
             <CardHeader>
               <div className="flex items-center gap-3 mb-4">
@@ -235,12 +220,13 @@ const Questionnaire = () => {
 
             <CardContent className="space-y-6">
 
-              {/* Slider */}
+              {/* SLIDER */}
               {currentQuestion.type === "slider" && (
                 <div className="space-y-6">
                   <Slider
+                    className="eco-slider"
                     value={[
-                      Number(answers[currentQuestion.id]) ||
+                      Number(answers[currentQuestion.id]) ??
                         currentQuestion.min,
                     ]}
                     min={currentQuestion.min}
@@ -250,7 +236,8 @@ const Questionnaire = () => {
                   />
 
                   <div className="text-center text-white text-4xl font-bold">
-                    {answers[currentQuestion.id] || currentQuestion.min}
+                    {answers[currentQuestion.id] ??
+                      currentQuestion.min}
                     <span className="text-gray-400 text-lg ml-2">
                       {currentQuestion.unit}
                     </span>
@@ -258,7 +245,7 @@ const Questionnaire = () => {
                 </div>
               )}
 
-              {/* Radio */}
+              {/* RADIO */}
               {currentQuestion.type === "radio" && (
                 <RadioGroup
                   value={String(answers[currentQuestion.id] || "")}
@@ -283,7 +270,7 @@ const Questionnaire = () => {
                 </RadioGroup>
               )}
 
-              {/* Navigation */}
+              {/* NAV */}
               <div className="flex gap-4 pt-6">
                 <Button
                   variant="outline"

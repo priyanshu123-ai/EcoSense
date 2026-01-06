@@ -1,6 +1,6 @@
 export const calculateDistanceKm = (coords) => {
   let distance = 0;
-  const R = 6371; // Earth radius in km
+  const R = 6371;
 
   for (let i = 1; i < coords.length; i++) {
     const lat1 = (coords[i - 1].lat * Math.PI) / 180;

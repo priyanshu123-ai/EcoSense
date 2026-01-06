@@ -1,9 +1,7 @@
+import axios from "axios";
 import { geocodeCity } from "../utils/geocodeCity.js";
-import { getRoadsBetweenPoints } from "../utils/overpassService.js";
 import { getAQIByCoords } from "../utils/getAQI.js";
-import { getRouteDistanceAndTime } from "../utils/getRouteDistance.js";
 
-/* AQI → COLOR (UI helper only) */
 const getAQIColor = (aqi) => {
   if (aqi === null) return "#9CA3AF";
   if (aqi <= 50) return "#22C55E";
@@ -17,15 +15,13 @@ export const routeController = async (req, res) => {
   try {
     const { originCity, destinationCity } = req.body;
 
-    // 1️⃣ Validate
     if (!originCity || !destinationCity) {
       return res.status(400).json({
         success: false,
-        message: "Origin and destination required",
+        message: "originCity and destinationCity required",
       });
     }
 
-    // 2️⃣ Geocode cities
     const origin = await geocodeCity(originCity);
     const destination = await geocodeCity(destinationCity);
 
@@ -36,68 +32,60 @@ export const routeController = async (req, res) => {
       });
     }
 
-    // 3️⃣ REAL distance & time (OSRM)
-    const { distanceKm, durationMin } =
-      await getRouteDistanceAndTime(origin, destination);
+    // ✅ OSRM URL (tested)
+    const osrmURL = `https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=full&geometries=geojson&alternatives=true`;
 
-    // 4️⃣ Fetch nearby real roads (for AQI + map rendering)
-    const roads = await getRoadsBetweenPoints(
-      origin.lat,
-      origin.lon,
-      destination.lat,
-      destination.lon
-    );
+    const osrmRes = await axios.get(osrmURL, { timeout: 15000 });
 
-    const routes = [];
-
-    // 5️⃣ Build routes (limit 5)
-    for (const road of roads.slice(0, 5)) {
-      if (!road.geometry || road.geometry.length < 2) continue;
-
-      // AQI from midpoint (REAL)
-      const mid = road.geometry[Math.floor(road.geometry.length / 2)];
-      const { aqi } = await getAQIByCoords(mid.lat, mid.lon);
-
-      routes.push({
-        id: road.id,
-        name: road.tags?.name || "Route option",
-        aqi,
-
-        // ✅ CORRECT PLACE
-        distance: `${distanceKm.toFixed(1)} km`,
-        duration: `${durationMin} min`,
-
-        maskAdvice:
-          aqi === null
-            ? "AQI unavailable"
-            : aqi > 100
-            ? "😷 Mask recommended"
-            : "✅ No mask required",
-
-        color: getAQIColor(aqi),
-        geometry: road.geometry,
+    if (!osrmRes.data?.routes?.length) {
+      return res.status(500).json({
+        success: false,
+        message: "No routes returned from OSRM",
       });
     }
 
-    // 6️⃣ Best route (lowest AQI)
-    const bestRoute =
-      routes
-        .filter((r) => r.aqi !== null)
-        .sort((a, b) => a.aqi - b.aqi)[0] || null;
+    const routes = [];
 
-    // 7️⃣ Response
-    return res.json({
+    for (let i = 0; i < osrmRes.data.routes.length; i++) {
+      const r = osrmRes.data.routes[i];
+
+      const geometry = r.geometry.coordinates.map(([lon, lat]) => ({
+        lat,
+        lon,
+      }));
+
+      // 🟡 AQI SAFE CALL
+      let aqi = null;
+      try {
+        const mid = geometry[Math.floor(geometry.length / 2)];
+        const aqiRes = await getAQIByCoords(mid.lat, mid.lon);
+        aqi = aqiRes?.aqi ?? null;
+      } catch (e) {
+        console.warn("AQI fetch failed, continuing...");
+      }
+
+      routes.push({
+        id: i,
+        name: `Route ${i + 1}`,
+        distance: `${(r.distance / 1000).toFixed(1)} km`,
+        duration: `${Math.round(r.duration / 60)} min`,
+        aqi,
+        color: getAQIColor(aqi),
+        geometry,
+      });
+    }
+
+    res.json({
       success: true,
       origin,
       destination,
-      bestRoute,
       routes,
     });
   } catch (err) {
-    console.error("Route Controller Error:", err.message);
-    return res.status(500).json({
+    console.error("ROUTE ERROR FULL:", err?.response?.data || err.message);
+    res.status(500).json({
       success: false,
-      message: "Route calculation failed",
+      message: err?.response?.data || err.message,
     });
   }
 };

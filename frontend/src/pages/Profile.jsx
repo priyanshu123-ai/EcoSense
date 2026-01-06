@@ -22,6 +22,7 @@ import {
   Clock,
   Loader2
 } from "lucide-react";
+import { serverUrl } from "@/main";
 
 
 
@@ -66,7 +67,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/v4/eco/latest", {
+        const res = await fetch(`${serverUrl}/api/v4/eco/latest`, {
           credentials: "include",
         });
         const data = await res.json();

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Bot, User, Send, Sparkles } from "lucide-react";
+import { serverUrl } from "@/main";
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([
@@ -35,7 +36,7 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3000/api/v3/chat", {
+      const res = await fetch(`${serverUrl}/api/v3/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg.content }),

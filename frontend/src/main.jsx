@@ -7,6 +7,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AuthProvider from "./components/context/context";
 
+export const serverUrl = "http://localhost:3000"
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>

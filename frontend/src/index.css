@@ -84,13 +84,20 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ===== ECO SLIDER FIX (Radix Slider) ===== */
+/* ===== GREEN ECO SLIDER ===== */
+.eco-slider [data-radix-slider-track] {
+  height: 6px;
+  background-color: #1f2937;
+}
 
+.eco-slider [data-radix-slider-range] {
+  background-color: #22c55e;
+}
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+.eco-slider [data-radix-slider-thumb] {
+  width: 18px;
+  height: 18px;
+  background-color: #22c55e;
+  border: 2px solid #16a34a;
 }

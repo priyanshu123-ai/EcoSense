@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { toast } from 'react-toastify';
 import { AuthContext } from '@/components/context/context';
+import { serverUrl } from '@/main';
 
 const Login = () => {
     const [loginData,setLoginData] = useState({
@@ -35,7 +36,7 @@ const Login = () => {
 
         try {
             setIsLoading(true)
-            const res = await axios.post("http://localhost:3000/api/v1/login",
+            const res = await axios.post(`${serverUrl}/api/v1/login`,
                 loginData,
                 {withCredentials:true}
 

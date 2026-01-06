@@ -8,6 +8,9 @@ import geoRouter from "./route/routeRouter.js";
 import chat from "./route/chatRoute.js";
 import eco from "./route/ecoRoute.js";
 import city from "./route/cityPollution.js";
+import router from "./route/challengeRoutes.js";
+import AiRouter from "./route/ecoAi.js";
+import billrouter from "./route/billRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +37,12 @@ app.use("/api/v3",chat)
 app.use("/api/v4",eco)
 
 app.use("/api/v5",city)
+
+app.use("/api/v6",router)
+
+app.use("/api/v7",AiRouter)
+
+app.use("/api/v8",billrouter)
 
 const port = process.env.PORT || 3000;
 

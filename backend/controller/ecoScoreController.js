@@ -183,29 +183,68 @@ Return ONLY valid JSON:
 
 export const getLeaderboard = async (req, res) => {
   try {
-    const leaderboard = await Assessment.find()
-      .populate("userId", "name email profile") 
-      .sort({ score: 1 }) // ✅ ASCENDING order
-      .select("score level userId"); // keep response clean
+    const leaderboard = await Assessment.aggregate([
+      // Latest assessment first (per user)
+      { $sort: { createdAt: -1 } },
 
-    const formatted = leaderboard.map((item) => ({
-      name: item.userId.name,
-      email: item.userId.email,
-      profilePhoto: item.userId.profile?.profilePhoto,
-      score: item.score,
-      level: item.level,
+      // Pick latest assessment of each user
+      {
+        $group: {
+          _id: "$userId",
+          score: { $first: "$score" },
+          level: { $first: "$level" },
+          createdAt: { $first: "$createdAt" }
+        }
+      },
+
+      // ASCENDING order by score (LOW → HIGH)
+      { $sort: { score: 1 } },
+
+      // Join user data
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+
+      { $unwind: "$user" },
+
+      {
+        $project: {
+          _id: 0,
+          userId: "$user._id",
+          name: "$user.name",
+          email: "$user.email",
+          avatar: "$user.profile.profilePhoto",
+          score: 1,
+          level: 1
+        }
+      }
+    ]);
+
+    // Rank will now be LOWEST = rank 1
+    const ranked = leaderboard.map((u, index) => ({
+      rank: index + 1,
+      ...u
     }));
 
     res.status(200).json({
       success: true,
-      totalUsers: formatted.length,
-      leaderboard: formatted,
+      totalUsers: ranked.length,
+      leaderboard: ranked
     });
   } catch (error) {
     console.error("Leaderboard Error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch leaderboard",
+      message: "Failed to fetch leaderboard"
     });
   }
 };
+
+
+
+
