@@ -21,7 +21,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://ecosense-2.onrender.com",
+      "https://ecosense-4.onrender.com",
     ],
     credentials: true,
   })
