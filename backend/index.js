@@ -16,9 +16,13 @@ dotenv.config();
 
 const app = express();
 
+/* ✅ CORS FIX */
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://ecosense-2.onrender.com",
+    ],
     credentials: true,
   })
 );
@@ -28,24 +32,19 @@ app.use(cookieParser());
 
 database();
 
+/* ROUTES */
 app.use("/api/v1", userRouter);
+app.use("/api/v2", geoRouter);
+app.use("/api/v3", chat);
+app.use("/api/v4", eco);
+app.use("/api/v5", city);
+app.use("/api/v6", router);
+app.use("/api/v7", AiRouter);
+app.use("/api/v8", billrouter);
 
-app.use("/api/v2",geoRouter)
+/* PORT (Render compatible) */
+const PORT = process.env.PORT || 3000;
 
-app.use("/api/v3",chat)
-
-app.use("/api/v4",eco)
-
-app.use("/api/v5",city)
-
-app.use("/api/v6",router)
-
-app.use("/api/v7",AiRouter)
-
-app.use("/api/v8",billrouter)
-
-const port = process.env.PORT || 3000;
-
-app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
