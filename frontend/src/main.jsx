@@ -7,7 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AuthProvider from "./components/context/context";
 
-export const serverUrl = "http://localhost:3000"
+export const serverUrl = "https://ecosense-7.onrender.com"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
